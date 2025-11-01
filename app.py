@@ -2,10 +2,18 @@ import streamlit as st
 import requests
 import pandas as pd
 import pandas_ta as ta
-import os
+import io
+import sys
+from contextlib import contextmanager
 
-# === SUPPRESS ALL OUTPUT FROM pandas_ta ===
-os.environ['PANDAS_TA_VERBOSE'] = '0'  # ← KILLS THE 0
+@contextmanager
+def suppress_stdout():
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
 
 # === GET FMP KEY FROM SECRETS ===
 api_key = st.secrets["FMP_API_KEY"]
@@ -33,28 +41,29 @@ def get_zoo_animal(ticker):
     if profile and len(profile) > 0 and 'revenueGrowth' in profile[0]:
         revenue_growth = profile[0]['revenueGrowth'] * 100
 
-    # 3. RSI — LATEST PRICE
+    # 3. RSI — Latest value
     hist_url = f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={api_key}&limit=30"
     hist = requests.get(hist_url).json()
     rsi = 50
     if 'historical' in hist and len(hist['historical']) >= 14:
         df = pd.DataFrame(hist['historical'])
         df['close'] = df['close'].astype(float)
-        df['rsi'] = ta.rsi(df['close'], length=14)
-        rsi_val = df['rsi'].iloc[-1]  # ← LATEST RSI
+        with suppress_stdout():
+            df['rsi'] = ta.rsi(df['close'], length=14)
+        rsi_val = df['rsi'].iloc[-1]
         if pd.notna(rsi_val):
             rsi = rsi_val
 
-    # 4. Animal + Image
-    if rsi > 60:
+    # 4. Animal + Photo (LOOSE RULES)
+    if rsi > 50:
         animal = "Lion"
         reason = f"RSI {rsi:.1f} – momentum rising!"
         img = "https://cdn.pixabay.com/photo/2015/09/15/14/09/lion-940142_1280.jpg"
-    elif revenue_growth > 10:
+    elif revenue_growth > 5:
         animal = "Phoenix"
         reason = f"+{revenue_growth:.1f}% sales growth!"
         img = "https://cdn.pixabay.com/photo/2017/08/07/18/08/phoenix-2608684_1280.jpg"
-    elif rsi < 45:
+    elif rsi < 50:
         animal = "Bear"
         reason = f"RSI {rsi:.1f} – getting cheap"
         img = "https://cdn.pixabay.com/photo/2017/01/12/22/50/bear-1974795_1280.jpg"
@@ -65,7 +74,7 @@ def get_zoo_animal(ticker):
 
     return animal, reason, img
 
-# === APP ===
+# === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
 st.title("ZooScanner")
 st.write("**Type any stock → get your animal instantly**")
