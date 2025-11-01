@@ -4,7 +4,7 @@ import pandas as pd
 import pandas_ta as ta
 
 # === YOUR FMP KEY ===
-api_key = "actual key here"  # ← Paste your working key
+api_key = st.secrets["FMP_API_KEY"] # ← Paste your working key
 
 def get_zoo_animal(ticker):
     ticker = ticker.upper().strip()
@@ -77,4 +77,5 @@ if user_input:
             st.markdown(f"### **{animal} {user_input.upper()}**")
             st.write(reason)
     else:
+
         st.error("Stock not found. Try again.")
