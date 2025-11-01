@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 import pandas_ta as ta
+import warnings
+warnings.filterwarnings("ignore")
 
 st.empty()
 
@@ -87,6 +89,7 @@ if user_input:
             st.write(reason)
     else:
         st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+
 
 
 
