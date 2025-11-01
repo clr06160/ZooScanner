@@ -50,7 +50,7 @@ def get_zoo_animal(ticker):
     elif rsi < 50:
         animal = "Bear"
         reason = f"RSI {rsi:.1f} – oversold"
-        img = "https://images.unsplash.com/photo-1570545887596-2a8c3cbcf116?w=200"
+        img = "https://images.unsplash.com/photo-1530595467537-0b0d7a9c3c3c?w=300"
     else:
         animal = "Turtle"
         reason = f"${price:.2f} – steady"
@@ -76,6 +76,7 @@ if user_input:
             st.write(reason)
     else:
         st.error("Not found.")
+
 
 
 
