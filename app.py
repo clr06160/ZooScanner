@@ -41,24 +41,23 @@ def get_zoo_animal(ticker):
             rsi = 50
 
     # Animal + Image
+        # Animal + Emoji (no external images)
     if rsi > 70 and vol_spike:
         animal = "Lion"
         reason = f"RSI {rsi:.1f} + volume spike!"
-        img = "https://images.unsplash.com/photo-1560114928-1564499c8b9e?w=100"
+        img = None  # No image, use emoji
     elif revenue_growth > 25:
         animal = "Phoenix"
         reason = f"+{revenue_growth:.1f}% sales growth!"
-        img = "https://images.unsplash.com/photo-1605720750655-5c16b9d8e3a4?w=100"
+        img = None
     elif rsi < 35:
         animal = "Bear"
         reason = f"RSI {rsi:.1f} – oversold"
-        img = "https://images.unsplash.com/photo-1570545887596-2a8c3cbcf116?w=100"
+        img = None
     else:
         animal = "Turtle"
         reason = f"${price:.2f} – calm"
-        img = "https://images.unsplash.com/photo-1548767793-6c4e8b1b21e3?w=100"
-
-    return animal, reason, img
+        img = None
 
 # === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
@@ -71,11 +70,20 @@ if user_input:
     animal, reason, img = get_zoo_animal(user_input)
     if animal:
         col1, col2 = st.columns([1, 3])
+                col1, col2 = st.columns([1, 4])
         with col1:
-            st.image(img, width=100)
+            if animal == "Lion":
+                st.write("")
+            elif animal == "Phoenix":
+                st.write("")
+            elif animal == "Bear":
+                st.write("")
+            else:  # Turtle
+                st.write("")
         with col2:
             st.markdown(f"### **{animal} {user_input.upper()}**")
             st.write(reason)
     else:
 
         st.error("Stock not found. Try again.")
+
