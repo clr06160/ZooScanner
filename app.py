@@ -41,21 +41,25 @@ def get_zoo_animal(ticker):
         if pd.notna(rsi_val):
             rsi = rsi_val
 
-    # 4. Animal + Emoji
+    # 4. Animal + Image URL
     if rsi > 70 and vol_spike:
         animal = "Lion"
         reason = f"RSI {rsi:.1f} + volume spike!"
+        img = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=150"
     elif revenue_growth > 25:
         animal = "Phoenix"
         reason = f"+{revenue_growth:.1f}% sales growth!"
+        img = "https://images.unsplash.com/photo-1605720750655-5c16b9d8e3a4?w=150"
     elif rsi < 35:
         animal = "Bear"
         reason = f"RSI {rsi:.1f} – oversold"
+        img = "https://images.unsplash.com/photo-1570545887596-2a8c3cbcf116?w=150"
     else:
         animal = "Turtle"
         reason = f"${price:.2f} – calm"
+        img = "https://images.unsplash.com/photo-1548767793-6c4e8b1b21e3?w=150"
 
-    return animal, reason, None  # img = None (we use emoji)
+    return animal, reason, img
 
 # === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
@@ -66,18 +70,21 @@ st.write("**Type any stock → get your animal instantly**")
 user_input = st.text_input("Enter stock ticker (e.g. NVDA, AAPL)", "")
 
 if user_input:
-    animal, reason, _ = get_zoo_animal(user_input)
+    animal, reason, img = get_zoo_animal(user_input)
     if animal and animal != "Ghost":
-        emoji = ""
-        if animal == "Lion": emoji = "Lion"
-        elif animal == "Phoenix": emoji = "Phoenix"
-        elif animal == "Bear": emoji = "Bear"
-        elif animal == "Turtle": emoji = "Turtle"
-        else: emoji = "Unknown"
-
-        st.markdown(f"### **{emoji} {animal} {user_input.upper()}**")
-        st.write(reason)
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            st.image(img, use_column_width=True)
+        with col2:
+            emoji = ""
+            if animal == "Lion": emoji = "Lion"
+            elif animal == "Phoenix": emoji = "Phoenix"
+            elif animal == "Bear": emoji = "Bear"
+            elif animal == "Turtle": emoji = "Turtle"
+            st.markdown(f"### **{emoji} {user_input.upper()}**")
+            st.write(reason)
     else:
         st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+
 
 
