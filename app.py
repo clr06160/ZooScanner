@@ -15,7 +15,7 @@ def get_zoo_animal(ticker):
 
     # 1. Quote
     quote = requests.get(f"https://financialmodelingprep.com/api/v3/quote/{ticker}?apikey={api_key}").json()
-    if not quote:
+    if not quote or len(quote) == 0:
         return "Ghost", "No data", None
     q = quote[0]
     price = q.get('price', 0)
@@ -25,7 +25,9 @@ def get_zoo_animal(ticker):
 
     # 2. Revenue Growth
     profile = requests.get(f"https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={api_key}").json()
-    revenue_growth = profile[0].get('revenueGrowth', 0) * 100 if profile else 0
+    revenue_growth = 0
+    if profile and len(profile) > 0 and 'revenueGrowth' in profile[0]:
+        revenue_growth = profile[0]['revenueGrowth'] * 100
 
     # 3. RSI — LATEST
     hist = requests.get(f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={api_key}&limit=30").json()
@@ -34,11 +36,11 @@ def get_zoo_animal(ticker):
         df = pd.DataFrame(hist['historical'])
         df['close'] = df['close'].astype(float)
         df['rsi'] = ta.rsi(df['close'], length=14)
-        rsi = df['rsi'].iloc[-1]
-        if pd.isna(rsi):
-            rsi = 50
+        rsi_val = df['rsi'].iloc[-1]
+        if pd.notna(rsi_val):
+            rsi = rsi_val
 
-    # 4. Animal + Image (FORCED VARIETY)
+    # 4. Animal + Image
     if rsi > 60:
         animal = "Lion"
         reason = f"RSI {rsi:.1f} – momentum!"
@@ -76,6 +78,7 @@ if user_input:
             st.write(reason)
     else:
         st.error("Not found.")
+
 
 
 
