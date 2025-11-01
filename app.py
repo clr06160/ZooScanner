@@ -2,20 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 import pandas_ta as ta
-import io
-import sys
-from contextlib import contextmanager
+import warnings
+warnings.filterwarnings("ignore")
 
-@contextmanager
-def suppress_stdout():
-    old_stdout = sys.stdout
-    sys.stdout = io.StringIO()
-    try:
-        yield
-    finally:
-        sys.stdout = old_stdout
-
-# === GET FMP KEY FROM SECRETS ===
+# === FMP KEY ===
 api_key = st.secrets["FMP_API_KEY"]
 
 def get_zoo_animal(ticker):
@@ -24,9 +14,8 @@ def get_zoo_animal(ticker):
         return None, None, None
 
     # 1. Quote
-    quote_url = f"https://financialmodelingprep.com/api/v3/quote/{ticker}?apikey={api_key}"
-    quote = requests.get(quote_url).json()
-    if not quote or len(quote) == 0:
+    quote = requests.get(f"https://financialmodelingprep.com/api/v3/quote/{ticker}?apikey={api_key}").json()
+    if not quote:
         return "Ghost", "No data", None
     q = quote[0]
     price = q.get('price', 0)
@@ -35,63 +24,58 @@ def get_zoo_animal(ticker):
     vol_spike = volume > avg_vol * 1.5
 
     # 2. Revenue Growth
-    profile_url = f"https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={api_key}"
-    profile = requests.get(profile_url).json()
-    revenue_growth = 0
-    if profile and len(profile) > 0 and 'revenueGrowth' in profile[0]:
-        revenue_growth = profile[0]['revenueGrowth'] * 100
+    profile = requests.get(f"https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={api_key}").json()
+    revenue_growth = profile[0].get('revenueGrowth', 0) * 100 if profile else 0
 
-    # 3. RSI — Latest value
-    hist_url = f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={api_key}&limit=30"
-    hist = requests.get(hist_url).json()
+    # 3. RSI — LATEST
+    hist = requests.get(f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={api_key}&limit=30").json()
     rsi = 50
     if 'historical' in hist and len(hist['historical']) >= 14:
         df = pd.DataFrame(hist['historical'])
         df['close'] = df['close'].astype(float)
-        with suppress_stdout():
-            df['rsi'] = ta.rsi(df['close'], length=14)
-        rsi_val = df['rsi'].iloc[-1]
-        if pd.notna(rsi_val):
-            rsi = rsi_val
+        df['rsi'] = ta.rsi(df['close'], length=14)
+        rsi = df['rsi'].iloc[-1]
+        if pd.isna(rsi):
+            rsi = 50
 
-    # 4. Animal + Photo (LOOSE RULES)
-    if rsi > 50:
+    # 4. Animal + Image (FORCED VARIETY)
+    if rsi > 60:
         animal = "Lion"
-        reason = f"RSI {rsi:.1f} – momentum rising!"
-        img = "https://cdn.pixabay.com/photo/2015/09/15/14/09/lion-940142_1280.jpg"
+        reason = f"RSI {rsi:.1f} – momentum!"
+        img = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=200"
     elif revenue_growth > 5:
         animal = "Phoenix"
-        reason = f"+{revenue_growth:.1f}% sales growth!"
-        img = "https://cdn.pixabay.com/photo/2017/08/07/18/08/phoenix-2608684_1280.jpg"
+        reason = f"+{revenue_growth:.1f}% growth!"
+        img = "https://images.unsplash.com/photo-1605720750655-5c16b9d8e3a4?w=200"
     elif rsi < 50:
         animal = "Bear"
-        reason = f"RSI {rsi:.1f} – getting cheap"
-        img = "https://cdn.pixabay.com/photo/2017/01/12/22/50/bear-1974795_1280.jpg"
+        reason = f"RSI {rsi:.1f} – oversold"
+        img = "https://images.unsplash.com/photo-1570545887596-2a8c3cbcf116?w=200"
     else:
         animal = "Turtle"
         reason = f"${price:.2f} – steady"
-        img = "https://cdn.pixabay.com/photo/2016/07/11/15/43/turtle-1510103_1280.jpg"
+        img = "https://images.unsplash.com/photo-1560114928-1564499c8b9e?w=200"
 
     return animal, reason, img
 
-# === STREAMLIT APP ===
-st.set_page_config(page_title="ZooScanner", layout="centered")
+# === APP ===
+st.set_page_config(page_title="ZooScanner")
 st.title("ZooScanner")
-st.write("**Type any stock → get your animal instantly**")
+st.write("**Type a stock → get your animal**")
 
-user_input = st.text_input("Enter stock ticker (e.g. NVDA, AAPL)", "")
+user_input = st.text_input("Ticker (NVDA, AAPL, TSLA)", "")
 
 if user_input:
     animal, reason, img = get_zoo_animal(user_input)
-    if animal and "Ghost" not in animal:
-        col1, col2 = st.columns([1, 4])
+    if animal != "Ghost":
+        col1, col2 = st.columns([1, 3])
         with col1:
             st.image(img, use_column_width=True)
         with col2:
             st.markdown(f"### {animal} {user_input.upper()}")
             st.write(reason)
     else:
-        st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+        st.error("Not found.")
 
 
 
