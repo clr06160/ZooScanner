@@ -60,6 +60,7 @@ def get_zoo_animal(ticker):
         img = None
 
 # === STREAMLIT APP ===
+# === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
 st.title("ZooScanner")
 st.write("**Type any stock → get your animal instantly**")
@@ -69,21 +70,16 @@ user_input = st.text_input("Enter stock ticker (e.g. NVDA, AAPL)", "")
 if user_input:
     animal, reason, img = get_zoo_animal(user_input)
     if animal:
-        col1, col2 = st.columns([1, 3])
-                col1, col2 = st.columns([1, 4])
-        with col1:
-            if animal == "Lion":
-                st.write("")
-            elif animal == "Phoenix":
-                st.write("")
-            elif animal == "Bear":
-                st.write("")
-            else:  # Turtle
-                st.write("")
-        with col2:
-            st.markdown(f"### **{animal} {user_input.upper()}**")
-            st.write(reason)
-    else:
+        emoji = ""
+        if animal == "Lion": emoji = "Lion"
+        elif animal == "Phoenix": emoji = "Phoenix"
+        elif animal == "Bear": emoji = "Bear"
+        elif animal == "Turtle": emoji = "Turtle"
+        else: emoji = "Unknown"
 
-        st.error("Stock not found. Try again.")
+        st.markdown(f"### **{emoji} {animal} {user_input.upper()}**")
+        st.write(reason)
+    else:
+        st.error("Stock not found. Try NVDA, AAPL, etc.")
+
 
