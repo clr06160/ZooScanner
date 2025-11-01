@@ -72,7 +72,7 @@ def get_zoo_animal(ticker: str):
             return (
                 "Bear",
                 f"RSI {rsi:.1f} – oversold",
-                "https://images.unsplash.com/photo-1530595467537-0b0d7a9c3c3c?w=300"
+                "https://cdn.pixabay.com/photo/2017/01/12/22/50/bear-1974795_1280.jpg"
             )
         # TURTLE (default)
         return (
@@ -106,6 +106,7 @@ if user_input:
         with col_txt:
             st.markdown(f"### {animal} {user_input.upper()}")
             st.write(reason)
+
 
 
 
