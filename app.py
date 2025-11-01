@@ -54,37 +54,46 @@ def get_zoo_animal(ticker):
         if pd.notna(rsi_val):
             rsi = rsi_val
 
-    # 4. Animal + Emoji (LOOSER RULES)
-    if rsi > 60:  # Was 70 → now 60
-        animal = "Lion"
+    # 4. Animal + Photo (SUPER LOOSE RULES FOR VARIETY)
+    if rsi > 55:  # Looser for Lion
+        animal = "🦁 Lion"
         reason = f"RSI {rsi:.1f} – momentum rising!"
-    elif revenue_growth > 15:  # Was 25 → now 15
-        animal = "Phoenix"
+        img = "https://cdn.pixabay.com/photo/2015/09/15/14/09/lion-940142_1280.jpg"  # Lion photo
+    elif revenue_growth > 10:  # Looser for Phoenix
+        animal = "🔥 Phoenix"
         reason = f"+{revenue_growth:.1f}% sales growth!"
-    elif rsi < 45:  # Was 35 → now 45
-        animal = "Bear"
+        img = "https://cdn.pixabay.com/photo/2017/08/07/18/08/phoenix-2608684_1280.jpg"  # Phoenix photo
+    elif rsi < 50:  # Looser for Bear
+        animal = "🐻 Bear"
         reason = f"RSI {rsi:.1f} – getting cheap"
+        img = "https://cdn.pixabay.com/photo/2017/01/12/22/50/bear-1974795_1280.jpg"  # Bear photo
     else:
-        animal = "Turtle"
+        animal = "🐢 Turtle"
         reason = f"${price:.2f} – steady"
+        img = "https://cdn.pixabay.com/photo/2017/02/20/18/03/cat-2083492_1280.jpg"  # Turtle photo (using cat as placeholder; swap if needed)
 
-    return animal, reason, None  # ← THIS WAS MISSING
+    return animal, reason, img
 
 # === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
-st.title("ZooScanner")
+st.title("🦁 ZooScanner")
 st.write("**Type any stock → get your animal instantly**")
 
 # Input
 user_input = st.text_input("Enter stock ticker (e.g. NVDA, AAPL)", "")
 
 if user_input:
-    animal, reason, _ = get_zoo_animal(user_input)
+    animal, reason, img = get_zoo_animal(user_input)
     if animal and "Ghost" not in animal:
-        st.markdown(f"### {animal} {user_input.upper()}")
-        st.write(reason)
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            st.image(img, use_column_width=True)
+        with col2:
+            st.markdown(f"### {animal} {user_input.upper()}")
+            st.write(reason)
     else:
         st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+
 
 
 
