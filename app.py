@@ -2,10 +2,18 @@ import streamlit as st
 import requests
 import pandas as pd
 import pandas_ta as ta
-import warnings
-warnings.filterwarnings("ignore")
+import io
+import sys
+from contextlib import contextmanager
 
-st.empty()
+@contextmanager
+def suppress_stdout():
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
 
 # === GET FMP KEY FROM SECRETS ===
 api_key = st.secrets["FMP_API_KEY"]
@@ -33,62 +41,51 @@ def get_zoo_animal(ticker):
     if profile and len(profile) > 0 and 'revenueGrowth' in profile[0]:
         revenue_growth = profile[0]['revenueGrowth'] * 100
 
-    # 3. RSI (FMP historical)
+    # 3. RSI (FMP historical) — Suppress output
     hist_url = f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={api_key}&limit=30"
     hist = requests.get(hist_url).json()
     rsi = 50
     if 'historical' in hist and len(hist['historical']) >= 14:
         df = pd.DataFrame(hist['historical'])
         df['close'] = df['close'].astype(float)
-        df['rsi'] = ta.rsi(df['close'], length=14)
+        with suppress_stdout():
+            df['rsi'] = ta.rsi(df['close'], length=14)
         rsi_val = df['rsi'].iloc[0]
         if pd.notna(rsi_val):
             rsi = rsi_val
 
-    # 4. Animal + Image URL
+    # 4. Animal + Emoji
     if rsi > 70 and vol_spike:
-        animal = "Lion"
+        animal = "🦁 Lion"
         reason = f"RSI {rsi:.1f} + volume spike!"
-        img = "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=150"
     elif revenue_growth > 25:
-        animal = "Phoenix"
+        animal = "🔥 Phoenix"
         reason = f"+{revenue_growth:.1f}% sales growth!"
-        img = "https://images.unsplash.com/photo-1605720750655-5c16b9d8e3a4?w=150"
     elif rsi < 35:
-        animal = "Bear"
+        animal = "🐻 Bear"
         reason = f"RSI {rsi:.1f} – oversold"
-        img = "https://images.unsplash.com/photo-1570545887596-2a8c3cbcf116?w=150"
     else:
-        animal = "Turtle"
+        animal = "🐢 Turtle"
         reason = f"${price:.2f} – calm"
-        img = "https://images.unsplash.com/photo-1548767793-6c4e8b1b21e3?w=150"
 
-    return animal, reason, img
+    return animal, reason, None
 
 # === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
-st.title("ZooScanner")
+st.title("🦁 ZooScanner")
 st.write("**Type any stock → get your animal instantly**")
 
 # Input
 user_input = st.text_input("Enter stock ticker (e.g. NVDA, AAPL)", "")
 
 if user_input:
-    animal, reason, img = get_zoo_animal(user_input)
-    if animal and animal != "Ghost":
-        col1, col2 = st.columns([1, 4])
-        with col1:
-            st.image(img, use_column_width=True)
-        with col2:
-            emoji = ""
-            if animal == "Lion": emoji = "Lion"
-            elif animal == "Phoenix": emoji = "Phoenix"
-            elif animal == "Bear": emoji = "Bear"
-            elif animal == "Turtle": emoji = "Turtle"
-            st.markdown(f"### **{emoji} {user_input.upper()}**")
-            st.write(reason)
+    animal, reason, _ = get_zoo_animal(user_input)
+    if animal and "Ghost" not in animal:
+        st.markdown(f"### {animal} {user_input.upper()}")
+        st.write(reason)
     else:
         st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+
 
 
 
