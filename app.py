@@ -55,20 +55,19 @@ def get_zoo_animal(ticker):
             rsi = rsi_val
 
     # 4. Animal + Emoji
-    if rsi > 70 and vol_spike:
-        animal = "🦁 Lion"
-        reason = f"RSI {rsi:.1f} + volume spike!"
-    elif revenue_growth > 25:
-        animal = "🔥 Phoenix"
+    # 4. Animal + Emoji (LOOSER RULES)
+    if rsi > 60:  # Was 70 → now 60
+        animal = "Lion"
+        reason = f"RSI {rsi:.1f} – momentum rising!"
+    elif revenue_growth > 15:  # Was 25 → now 15
+        animal = "Phoenix"
         reason = f"+{revenue_growth:.1f}% sales growth!"
-    elif rsi < 35:
-        animal = "🐻 Bear"
-        reason = f"RSI {rsi:.1f} – oversold"
+    elif rsi < 45:  # Was 35 → now 45
+        animal = "Bear"
+        reason = f"RSI {rsi:.1f} – getting cheap"
     else:
-        animal = "🐢 Turtle"
-        reason = f"${price:.2f} – calm"
-
-    return animal, reason, None
+        animal = "Turtle"
+        reason = f"${price:.2f} – steady"
 
 # === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
@@ -85,6 +84,7 @@ if user_input:
         st.write(reason)
     else:
         st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+
 
 
 
