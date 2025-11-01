@@ -54,7 +54,6 @@ def get_zoo_animal(ticker):
         if pd.notna(rsi_val):
             rsi = rsi_val
 
-    # 4. Animal + Emoji
     # 4. Animal + Emoji (LOOSER RULES)
     if rsi > 60:  # Was 70 → now 60
         animal = "Lion"
@@ -69,9 +68,11 @@ def get_zoo_animal(ticker):
         animal = "Turtle"
         reason = f"${price:.2f} – steady"
 
+    return animal, reason, None  # ← THIS WAS MISSING
+
 # === STREAMLIT APP ===
 st.set_page_config(page_title="ZooScanner", layout="centered")
-st.title("🦁 ZooScanner")
+st.title("ZooScanner")
 st.write("**Type any stock → get your animal instantly**")
 
 # Input
