@@ -3,29 +3,28 @@ import requests
 import pandas as pd
 import pandas_ta as ta
 import warnings
-import base64
-
 warnings.filterwarnings("ignore")
 
-# === FMP KEY ===
+# FMP KEY
 api_key = st.secrets["FMP_API_KEY"]
 
-# === EMBEDDED IMAGES (BASE64) ===
-LION_B64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxISEhUTExMWFh"
-# ... (full base64 for lion, bear, phoenix, turtle — I’ll give you the full strings below)
-
-# === FUNCTION ===
 def get_zoo_animal(ticker):
     ticker = ticker.upper().strip()
     if not ticker:
-        return "Error", "Empty", LION_B64
+        return "Error", "Empty", "images/turtle.jpg"
 
     # Quote
     quote = requests.get(f"https://financialmodelingprep.com/api/v3/quote/{ticker}?apikey={api_key}").json()
-    if not quote:
-        return "Ghost", "No data", LION_B64
+    if not quote or len(quote) == 0:
+        return "Ghost", "No data", "images/turtle.jpg"
     q = quote[0]
     price = q.get('price', 0)
+
+    # Revenue Growth
+    profile = requests.get(f"https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={api_key}").json()
+    revenue_growth = 0
+    if profile and len(profile) > 0 and 'revenueGrowth' in profile[0]:
+        revenue_growth = profile[0]['revenueGrowth'] * 100
 
     # RSI
     hist = requests.get(f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?apikey={api_key}&limit=30").json()
@@ -40,23 +39,17 @@ def get_zoo_animal(ticker):
             if pd.notna(rsi_val):
                 rsi = rsi_val
 
-    # Revenue Growth
-    profile = requests.get(f"https://financialmodelingprep.com/api/v3/profile/{ticker}?apikey={api_key}").json()
-    revenue_growth = 0
-    if profile and 'revenueGrowth' in profile[0]:
-        revenue_growth = profile[0]['revenueGrowth'] * 100
-
-    # Animal
+    # Animal + YOUR IMAGES
     if rsi > 60:
-        return "Lion", f"RSI {rsi:.1f} – momentum!", LION_B64
+        return "Lion", f"RSI {rsi:.1f} – momentum!", "images/lion.jpg"
     elif revenue_growth > 5:
-        return "Phoenix", f"+{revenue_growth:.1f}% growth!", PHOENIX_B64
+        return "Phoenix", f"+{revenue_growth:.1f}% growth!", "images/phoenix.jpg"
     elif rsi < 50:
-        return "Bear", f"RSI {rsi:.1f} – oversold", BEAR_B64
+        return "Bear", f"RSI {rsi:.1f} – oversold", "images/bear.jpg"
     else:
-        return "Turtle", f"${price:.2f} – steady", TURTLE_B64
+        return "Turtle", f"${price:.2f} – steady", "images/turtle.jpg"
 
-# === APP ===
+# APP
 st.set_page_config(page_title="ZooScanner")
 st.title("ZooScanner")
 st.write("**Type a stock → get your animal**")
