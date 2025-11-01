@@ -3,6 +3,8 @@ import requests
 import pandas as pd
 import pandas_ta as ta
 
+st.empty()
+
 # === GET FMP KEY FROM SECRETS ===
 api_key = st.secrets["FMP_API_KEY"]
 
@@ -85,6 +87,7 @@ if user_input:
             st.write(reason)
     else:
         st.error("Stock not found. Try NVDA, AAPL, TSLA.")
+
 
 
 
